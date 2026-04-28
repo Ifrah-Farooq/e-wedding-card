@@ -375,6 +375,17 @@ a { color:var(--teal-light); text-decoration:none }
   color:#e8e0d4; text-transform:uppercase;
   padding:.32rem .95rem; border:1px solid rgba(200,150,58,.3); border-radius:22px; display:inline-block;
 }
+.date-card canvas {
+  position:absolute; inset:0; width:100%; height:100%;
+  cursor:grab; touch-action:none; border-radius:20px;
+}
+.date-card canvas:active { cursor:grabbing }
+.scratch-hint {
+  text-align:center; margin-top:1.6rem;
+  font-family:var(--display); font-size:.62rem; letter-spacing:.35em; text-transform:uppercase;
+  color:var(--gold-400); opacity:.7;
+  animation:blink 2.2s ease-in-out infinite alternate;
+}
 
 /* ══ EVENTS (dark) ══ */
 .events-sec {
@@ -566,20 +577,24 @@ textarea { resize:vertical; min-height:110px }
         <div class="dc-month">May</div>
         <div class="dc-weekday">Monday</div>
         <div class="dc-event">Mehndi</div>
+        <canvas></canvas>
       </div>
       <div class="date-card">
         <div class="dc-day">19</div>
         <div class="dc-month">May</div>
         <div class="dc-weekday">Tuesday</div>
         <div class="dc-event">Nikah</div>
+        <canvas></canvas>
       </div>
       <div class="date-card">
         <div class="dc-day">20</div>
         <div class="dc-month">May</div>
         <div class="dc-weekday">Wednesday</div>
         <div class="dc-event">Walima</div>
+        <canvas></canvas>
       </div>
     </div>
+    <div class="scratch-hint">✦ &nbsp; scratch to reveal &nbsp; ✦</div>
   </div>
 </section>
 
@@ -787,6 +802,93 @@ function updateCountdown(){
 }
 updateCountdown();
 setInterval(updateCountdown, 1000);
+
+// ── Scratch cards ──
+document.querySelectorAll('.date-card').forEach(card => {
+  const canvas = card.querySelector('canvas');
+  const ctx    = canvas.getContext('2d');
+
+  const draw = () => {
+    const r = card.getBoundingClientRect();
+    canvas.width  = r.width;
+    canvas.height = r.height;
+
+    // Background gradient matching the teal card aesthetic
+    const g = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    g.addColorStop(0,   '#0d3a52');
+    g.addColorStop(0.5, '#1a6a8a');
+    g.addColorStop(1,   '#0a2535');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Subtle diagonal lines texture
+    ctx.strokeStyle = 'rgba(255,255,255,.05)';
+    ctx.lineWidth = 1;
+    for (let i = -canvas.height; i < canvas.width; i += 12) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + canvas.height, canvas.height);
+      ctx.stroke();
+    }
+
+    // Gold shimmer band across middle
+    const shine = ctx.createLinearGradient(0, canvas.height * .38, 0, canvas.height * .62);
+    shine.addColorStop(0,   'rgba(200,155,55,.0)');
+    shine.addColorStop(0.5, 'rgba(200,155,55,.08)');
+    shine.addColorStop(1,   'rgba(200,155,55,.0)');
+    ctx.fillStyle = shine;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // "SCRATCH" label
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,248,220,.88)';
+    ctx.font = `600 ${Math.round(canvas.width * .095)}px Cinzel, serif`;
+    ctx.fillText('SCRATCH', canvas.width / 2, canvas.height / 2 - 4);
+
+    // Star below
+    ctx.fillStyle = 'rgba(200,155,55,.75)';
+    ctx.font = `${Math.round(canvas.width * .07)}px serif`;
+    ctx.fillText('✦', canvas.width / 2, canvas.height / 2 + canvas.height * .14);
+  };
+
+  draw();
+  window.addEventListener('resize', draw);
+
+  let drawing = false, revealed = false;
+  const getPos = e => {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  };
+
+  const scratchAt = e => {
+    if (!drawing) return;
+    const p = getPos(e);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (!revealed) {
+      const data  = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      let cleared = 0;
+      for (let i = 3; i < data.length; i += 200) if (data[i] === 0) cleared++;
+      if (cleared / (data.length / 200) > 0.55) {
+        revealed = true;
+        canvas.style.transition = 'opacity .8s ease';
+        canvas.style.opacity    = '0';
+        setTimeout(() => canvas.remove(), 820);
+      }
+    }
+  };
+
+  canvas.addEventListener('mousedown',  e => { drawing = true; scratchAt(e); });
+  canvas.addEventListener('mousemove',  scratchAt);
+  window.addEventListener('mouseup',    () => { drawing = false; });
+  canvas.addEventListener('touchstart', e => { drawing = true; scratchAt(e); e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('touchmove',  e => { scratchAt(e); e.preventDefault(); },               { passive: false });
+  canvas.addEventListener('touchend',   () => { drawing = false; });
+});
 
 // ── RSVP ──
 function handleRsvp(e){
