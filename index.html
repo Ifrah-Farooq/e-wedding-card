@@ -54,8 +54,12 @@ a     { color:var(--amber-lt); text-decoration:none }
 }
 .bg-mesh {
   position:absolute; inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='40' cy='40' r='38' fill='none' stroke='rgba(200%2C144%2C72%2C.025)' stroke-width='.5'/%3E%3Ccircle cx='40' cy='40' r='20' fill='none' stroke='rgba(200%2C144%2C72%2C.018)' stroke-width='.4'/%3E%3C/svg%3E");
-  background-size:80px 80px;
+  /* Flowing wave lines — completely different from any geometric grid */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='48'%3E%3Cpath d='M0%2C24 C40%2C6 80%2C6 120%2C24 C160%2C42 200%2C42 240%2C24' fill='none' stroke='rgba(200%2C144%2C72%2C.032)' stroke-width='.8'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='48'%3E%3Cpath d='M0%2C24 C40%2C42 80%2C42 120%2C24 C160%2C6 200%2C6 240%2C24' fill='none' stroke='rgba(200%2C144%2C72%2C.018)' stroke-width='.5'/%3E%3C/svg%3E");
+  background-size:240px 48px, 240px 48px;
+  background-position:0 0, 0 24px;
 }
 .orb { position:absolute; border-radius:50%; filter:blur(100px) }
 .orb-1 { width:min(600px,100vw); height:min(600px,100vh); top:-20%; right:-18%;
